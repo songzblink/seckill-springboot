@@ -4,12 +4,15 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="top.zbsong.dao.StockDAO">
     <!--根据秒杀商品的id去查询库存-->
-    <select id="chechStock" parameterType="int" resultType="Stock">
+    <select id="checkStock" parameterType="int" resultType="Stock">
         select id,name,count,sale,version from stock
         where id=#{id}
     </select>
     <!--根据商品id去扣除库存-->
     <update id="updateSale" parameterType="Stock">
-        update stock set sale=#{sale} where id=#{id}
+        update stock set
+            sale=sale+1,
+            version=version+1
+        where id=#{id} and version=#{version}
     </update>
 </mapper>
