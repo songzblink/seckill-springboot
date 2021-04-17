@@ -183,10 +183,86 @@ logging.level.root=info
 logging.level.top.zbsong.dao=debug
 ```
 
-#### 创建相应的包
+### 分析业务
 
-controller、service、dao、entity
+![image.png](https://pic.tyzhang.top/images/2021/04/17/image.png)
 
-#### 启动类添加注解
+### 开发代码
 
-在 top.zbsong.MiaoshaApplication 上添加 `@MapperScan("top.zbsong.dao")`
+#### DAO代码
+
+```java
+public interface StockDAO {
+    // 根据商品id查询库存信息的方法
+    Stock chechStock(Integer id);
+    // 根据商品id扣除库存
+    void updateSale(Stock stock);
+}
+
+public interface OrderDAO {
+    // 创建订单方法
+    void createOrder(Order order);
+}
+```
+
+#### Service 代码
+
+```java
+@Service
+@Transactional
+public class OrderServiceImpl implements OrderService {
+    @Autowired
+    private StockDAO stockDAO;
+
+    @Autowired
+    private OrderDAO orderDAO;
+
+    @Override
+    public int kill(Integer id) {
+        // 根据商品id去校验库存，检验的都是已售和库存的关系
+        Stock stock = stockDAO.chechStock(id);
+        // 初始的库存等于已售库存，说明没有了
+        if (stock.getSale().equals(stock.getCount())) {
+            throw new RuntimeException("库存不足");
+        } else {
+            // 扣除库存
+            stock.setSale(stock.getSale() + 1);
+            stockDAO.updateSale(stock);
+            // 创建订单
+            Order order = new Order();
+            order.setSid(stock.getId()).setName(stock.getName()).setCreateDate(new Date());
+            orderDAO.createOrder(order);
+            return order.getId();
+        }
+    }
+}
+```
+
+#### Controller代码
+
+```java
+@RestController
+@RequestMapping("stock")
+public class StockController {
+
+    @Autowired
+    private OrderService orderService;
+
+    //  根据秒杀商品id去调用秒杀业务
+    @GetMapping("kill")
+    public String kill(Integer id) {
+        System.out.println("秒杀商品的id=" + id);
+        try {
+            int orderId = orderService.kill(id);
+            return "秒杀成功，订单id为" + String.valueOf(orderId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e.getMessage();
+        }
+    }
+}
+```
+
+### 正常测试
+
+在正常测试下不会出现超卖问题。

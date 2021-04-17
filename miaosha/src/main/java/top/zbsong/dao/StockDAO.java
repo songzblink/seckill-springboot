@@ -9,4 +9,10 @@ public interface StockDAO {
      * @return
      */
     Stock chechStock(Integer id);
+
+    /**
+     * 根据商品id扣除库存
+     * @param stock
+     */
+    void updateSale(Stock stock);
 }

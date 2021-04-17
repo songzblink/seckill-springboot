@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="top.zbsong.dao.OrderDAO">
+    <!--创建订单-->
+    <!--
+    useGeneratedKeys="true" 根据数据库主键生成策略来帮我们生成id
+    keyProperty="id" 把生成的id放到传到对象的id属性中
+        -->
+    <insert id="createOrder" parameterType="Order" useGeneratedKeys="true" keyProperty="id">
+        insert into stock_order values(#{id},#{sid},#{name},#{createDate})
+    </insert>
+</mapper>

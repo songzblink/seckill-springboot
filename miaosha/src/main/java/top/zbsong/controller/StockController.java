@@ -5,9 +5,10 @@ import org.springframework.core.annotation.AliasFor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import top.zbsong.service.OrderService;
 
-@Controller
+@RestController
 @RequestMapping("stock")
 public class StockController {
 
@@ -23,7 +24,12 @@ public class StockController {
     @GetMapping("kill")
     public String kill(Integer id) {
         System.out.println("秒杀商品的id=" + id);
-        int orderId = orderService.kill(id);
-        return "秒杀成功，订单id为" + String.valueOf(orderId);
+        try {
+            int orderId = orderService.kill(id);
+            return "秒杀成功，订单id为" + String.valueOf(orderId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e.getMessage();
+        }
     }
 }
