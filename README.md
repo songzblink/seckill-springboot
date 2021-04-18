@@ -1,5 +1,10 @@
+**学习地址**
+
 https://blog.csdn.net/unique_perfect/article/details/109439039
+
 https://www.bilibili.com/video/BV13a4y1t7Wh?t=10&p=3
+
+下面是记录了学习的步骤、流程。
 
 ## 1.系统场景
 针对单系统情况下的一个Demo。
@@ -50,7 +55,7 @@ CREATE TABLE `stock_order` (
 
 ### 2.2 创建快速SpringBoot项目
 
-#### 依赖
+**1 依赖**
 
 在创建项目时选择添加
 
@@ -158,7 +163,7 @@ mybatis 和数据库整合是还需要一个数据源，添加数据源依赖
 </project>
 ```
 
-#### 配置文件
+**2 配置文件**
 
 application.properties
 
@@ -190,7 +195,7 @@ logging.level.top.zbsong.dao=debug
 
 ### 2.4 开发代码
 
-#### DAO代码
+**DAO代码**
 
 ```java
 public interface StockDAO {
@@ -206,7 +211,7 @@ public interface OrderDAO {
 }
 ```
 
-#### Service 代码
+**Service 代码**
 
 ```java
 @Service
@@ -239,7 +244,7 @@ public class OrderServiceImpl implements OrderService {
 }
 ```
 
-#### Controller代码
+**Controller代码**
 
 ```java
 @RestController
@@ -270,11 +275,11 @@ public class StockController {
 
 ### 2.6 使用Jmeter进行压力测试
 
-#### 介绍
+**介绍**
 
 Apache JMeter 是 Apache 组织开发的基于 Java 的压力测试工具。用于对软件做压力测试，它最初被设计用于 Web 应用测试，但后来扩展到其他测试领域。 它可以用于测试静态和动态资源，例如静态文件、Java 小服务程序、CGI 脚本、Java 对象、数据库、FTP 服务器， 等等。JMeter 可以用于对服务器、网络或对象模拟巨大的负载，来自不同压力类别下测试它们的强度和分析整体性能。另外，JMeter 能够对应用程序做功能/回归测试，通过创建带有断言的脚本来验证你的程序返回了你期望的结果
 
-#### 安装Jmeter
+**安装Jmeter**
 
 官网：`https://jmeter.apache.org/`
 
@@ -302,7 +307,7 @@ Apache JMeter 是 Apache 组织开发的基于 Java 的压力测试工具。用�
       	  在 cmd 中输入 jmeter -v
 ```
 
-#### 压力测试
+**压力测试**
 
 `jmeter -n -t [jmx file] -l [results file] -e -o [Path to web report folder]`
 
@@ -342,7 +347,7 @@ synchronized 线程如果比事务范围小, 释放锁后 ，事务没有结束�
 
 **说明:** 使用乐观锁解决商品的超卖问题,实际上是把主要防止超卖问题交给数据库解决,利用数据库中定义的 `version字段` 以及数据库中的 `事务` 实现在并发情况下商品的超卖问题。(CAS)
 
-#### 修改代码
+**1 修改代码**
 
 **校验库存的方法(不变)**
 
@@ -409,7 +414,7 @@ private Integer createOrder(Stock stock) {
 </insert>
 ```
 
-**完整的业务方法与Mapper.xml**
+**2 完整的业务方法与Mapper.xml**
 
 Service方法
 
@@ -481,7 +486,7 @@ OrderDAOMapper.xml
 </insert>
 ```
 
-#### 测试
+**3 测试**
 
 同样设置库存为 100，并发的线程数量为 2000。
 
@@ -516,7 +521,7 @@ OrderDAOMapper.xml
 
 一般是放在控制层去限制请求。
 
-#### 3.2.1 项目中引入依赖
+**1 项目中引入依赖**
 
 ```xml
 <!--google开源工具类RateLimiter令牌桶实现-->
@@ -527,7 +532,7 @@ OrderDAOMapper.xml
 </dependency>
 ```
 
-#### 3.2.2 令牌桶算法的基本使用
+**2 令牌桶算法的基本使用**
 
 ```java
 // 令牌桶实例
@@ -575,10 +580,387 @@ public String killtoken(Integer id) {
 
 ### 3.4 测试
 
-库存为100，令牌桶大小为 20，访问线程数为 2000。
+库存为100，令牌桶大小为 10，访问线程数为 2000。
 
 运行 Jmeter 压力测试工具：`jmeter -n -t ./"秒杀+令牌桶.jmx"`。
 
+![imagec16711962d96ae2b.png](https://pic.tyzhang.top/images/2021/04/18/imagec16711962d96ae2b.png)
+
 我们完成了防止超卖商品和抢购接口的限流，已经能够防止大流量把我们的服务器直接搞炸。
 
-但存在的问题是：可能会导致少卖，我们计划一共卖出 100 件，但是实际上因为进行了接口限流，只卖出去了一部分（因为我的笔记本怎么跑都卖完了，所以没办法截图）。可以通过修改令牌桶的大小或者是修改丢弃的时间（修改策略）来让这 100 件商品都没卖出去。
+但存在的问题是：可能会导致少卖，我们计划一共卖出 100 件，但是实际上因为进行了接口限流，只卖出去了一部分。可以通过修改令牌桶的大小或者是修改丢弃的时间（修改策略）来让这 100 件商品都没卖出去。
+
+## 4. 隐藏秒杀接口
+
+我们完成了防止超卖商品和抢购接口的限流，已经能够防止大流量把我们的服务器直接搞炸。接下来我们要开始关心一些细节问题：
+
+1. 我们应该在一定的时间内执行秒杀处理，不能再任意时间都接受秒杀请求。如何加入时间验证？
+2. 对于稍微懂点电脑的，又会动歪脑筋的人来说开始通过抓包方式获取我们的接口地址。然后通过脚本进行抢购怎么办？
+3. 秒杀开始之后如何限制单个用户的请求频率，即单位时间内限制访问次数？
+
+关于抢购（下单）接口相关的单用户防刷措施：
+
+- 限时抢购
+- 抢购接口隐藏
+- 单用户限制频率（单位时间内限制访问次数）
+
+### 4.1 限时抢购的实现
+
+使用 Redis 来记录秒杀商品的时间，对秒杀过期的请求进行拒绝处理!!
+
+**1 启动Redis**
+
+windows 系统下运行 `redis-server.exe`，启动 Redis 服务器。然后运行 `redis-cli.exe` 启动客户端。
+
+输入命令 `keys *` 查看当前缓存是否为空，如果不为空则输入命令 `FLUSHALL` 清除缓存。
+
+**2 将秒杀商品放入Redis并设置超时**
+
+使用 String 类型，以 `kill + 商品id` 作为 key，以 `商品id` 作为 value，设置 180 秒超时（可随意设置时间）。
+
+```
+127.0.0.1:6379> set kill1 1 EX 180
+OK
+```
+
+**3 抢购中加入时间控制**
+
+整合当前项目操作 redis 服务，这里使用 spring-boot-starter-data-redis 操作 redis
+
+**1 引入依赖**
+
+```xml
+<!--springboot整合redis依赖-->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+```
+
+**2 修改配置连接redis**
+
+```properties
+# 配置redis
+spring.redis.database=0
+spring.redis.port=6379
+spring.redis.host=localhost
+```
+
+Redis 和 Spring 结合起来的时候，使用到的工具类有 RedisTemplate 和StringRedisTemplate，前者主要是操作对象，后者主要是操作字符串。
+
+**3 通过redis控制抢购超时的请求**
+
+```java
+@Service
+@Transactional
+public class OrderServiceImpl implements OrderService {
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
+
+    @Override
+    public int kill(Integer id) {
+        // 校验Redis中的秒杀商品是否超时
+        if (!stringRedisTemplate.hasKey("kill" + id)) {
+            throw new RuntimeException("当前商品的抢购活动已经结束啦~");
+        }
+        // 校验库存
+        Stock stock = checkStock(id);
+        // 扣除库存
+        updateSale(stock);
+        // 创建订单
+        return createOrder(stock);
+    }
+}
+```
+
+**测试**
+
+Redis-cli 中输入 `set kill1 1 EX 10` 设置时间，切换到 Jmeter 中运行测试。
+
+### 4.2 抢购接口隐藏
+
+对于稍微懂点电脑的，又会动歪脑筋的人来说，点击 F12 打开浏览器的控制台，就能在点击抢购按钮后，获取我们抢购接口的链接。（手机 APP 等其他客户端可以抓包来拿到）一旦坏蛋拿到了抢购的链接，只要稍微写点爬虫代码，模拟一个抢购请求，就可以不通过点击下单按钮，直接在代码中请求我们的接口，完成下单。所以就有了成千上万的薅羊毛军团，写一些脚本抢购各种秒杀商品。
+
+他们只需要在抢购时刻的 000 毫秒，开始不间断发起大量请求，觉得比大家在 APP 上点抢购按钮要快，毕竟人的速度有极限，更别说 APP 说不定还要经过几层前端验证才会真正发出请求。
+所以我们需要将抢购接口进行隐藏，抢购接口隐藏（接口加盐）的具体做法：
+
+- 每次点击秒杀按钮，先从服务器获取一个秒杀验证值（接口内判断是否到秒杀时间）。
+- Redis 以缓存用户 ID 和商品 ID 为 Key，秒杀地址为 Value 缓存验证值
+- 用户请求秒杀商品的时候，要带上秒杀验证值进行校验。
+
+![image9dccebe2146f2d5a.png](https://pic.tyzhang.top/images/2021/04/18/image9dccebe2146f2d5a.png)
+
+**1 **新增用户表
+
+![imagef45097b36d5fb31f.png](https://pic.tyzhang.top/images/2021/04/18/imagef45097b36d5fb31f.png)
+
+```sql
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+-- ----------------------------
+-- Table structure for user
+-- ----------------------------
+DROP TABLE IF EXISTS `user`;
+CREATE TABLE `user` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `name` varchar(80) DEFAULT NULL COMMENT '用户名',
+  `password` varchar(40) DEFAULT NULL COMMENT '用户密码',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+
+SET FOREIGN_KEY_CHECKS = 1;
+```
+
+**2 Controller代码**
+
+```java
+// 根据商品id和用户id获取md5值
+public String getMd5(Integer id, Integer userid) {
+    String md5;
+    try {
+        md5 = orderService.getMd5(id, userid);
+    } catch (Exception e) {
+        e.printStackTrace();
+        return "获取md5失败：" + e.getMessage();
+    }
+    return "获取md5信息为：" + md5;
+}
+
+// 秒杀方法  乐观锁防止超卖+令牌桶算法限流+md5接口隐藏
+@RequestMapping("killtokenmd5")
+public String killtoken(Integer id, Integer userid, String md5) {
+    System.out.println("秒杀商品的id=" + id);
+    // 加入令牌桶限流措施
+    // 设置一个等待时间，在等待时间内没有获取到响应token则抛弃
+    if (!rateLimiter.tryAcquire(1, TimeUnit.SECONDS)) {
+        log.info("抛弃请求：抢购失败，当前秒杀活动过于火爆，请重试!");
+        return "抢购失败，当前秒杀活动过于火爆，请重试!";
+    }
+    try {
+        int orderId = orderService.kill(id, userid, md5);
+        return "秒杀成功，订单id为" + String.valueOf(orderId);
+    } catch (Exception e) {
+        e.printStackTrace();
+        return e.getMessage();
+    }
+}
+```
+
+**3 Service代码**
+
+```java
+// 根据商品id和用户id生成md5值
+@Override
+public String getMd5(Integer id, Integer userid) {
+    // 检验用户的合法性 userid存在用户信息
+    User user = userDAO.findById(userid);
+    if (user == null) {
+        throw new RuntimeException("用户信息不存在!");
+    }
+    log.info("用户信息：[{}]", user.toString());
+    // 检验商品的合法性 id存在商品信息
+    Stock stock = stockDAO.checkStock(id);
+    if (stock == null) {
+        throw new RuntimeException("商品信息不合法!");
+    }
+    log.info("商品信息：[{}]", stock.toString());
+    // 生成hashkey
+    String hashkey = "KEY_" + userid + "_" + id;
+    // 生成md5，这里的 "!QJS#" 是一个盐，随机生成
+    String key = DigestUtils.md5DigestAsHex((userid + id + "!Q*JS#").getBytes());
+    stringRedisTemplate.opsForValue().set(hashkey, key, 3600, TimeUnit.SECONDS);
+    log.info("Redis写入：[{}] [{}]", hashkey, key);
+    return key;
+}
+
+@Override
+public int kill(Integer id, Integer userid, String md5) {
+    // 校验Redis中的秒杀商品是否超时
+    if (!stringRedisTemplate.hasKey("kill" + id)) {
+        throw new RuntimeException("当前商品的抢购活动已经结束啦~");
+    }
+
+    // 验证签名
+    String hashKey = "KEY_" + userid + "_" + id;
+    String s = stringRedisTemplate.opsForValue().get(hashKey);
+    if (s == null) {
+        throw new RuntimeException("没有携带验证签名，请求不合法!");
+    }
+    if (!s.equals(md5)) {
+        throw new RuntimeException("当前请求数据不合法，清稍后再试!");
+    }
+    // 校验库存
+    Stock stock = checkStock(id);
+    // 扣除库存
+    updateSale(stock);
+    // 创建订单
+    return createOrder(stock);
+}
+```
+
+**4 DAO代码和Entity**
+
+```java
+@Data
+public class User {
+    private Integer id;
+    private String name;
+    private String password;
+}
+```
+
+```java
+public interface UserDAO {
+    // 根据用户id查询用户
+    User findById(Integer userid);
+}
+```
+
+```xml
+<select id="findById" parameterType="Integer" resultType="User">
+    select id,name,password from user where id=#{userid};
+</select>
+```
+
+**5 数据库添加用户记录**
+
+`1 xiaosong 123456`
+
+**6 测试**
+
+**开启秒杀**
+
+`set kill1 1 EX 180`
+
+**获取md5**
+
+访问接口`http://localhost/ms/stock/md5` 
+
+![imageb83d9bc795b52996.png](https://pic.tyzhang.top/images/2021/04/18/imageb83d9bc795b52996.png)
+
+**秒杀请求**
+
+不合法请求（md5值不合法）
+
+![1618737137139](E:\IDEAWorkspace\seckillDemo\README\1618737137139.png)
+
+合法请求（携带正确的商品id、用户id以及生成的md5值）
+
+[![image5f1c72cddb0860ae.png](https://pic.tyzhang.top/images/2021/04/18/image5f1c72cddb0860ae.png)](https://pic.tyzhang.top/image/GdOs)
+
+### 4.3 单用户限制频率
+
+假设我们做好了接口隐藏，但是像上面说的，总有无聊的人会写一个复杂的脚本，先请求 hash(md5) 值，再立刻请求购买，如果你的 app 下单按钮做的很差，大家都要开抢后 0.5 秒才能请求成功，那可能会让脚本依然能够在大家前面抢购成功。
+
+我们需要在做一个额外的措施，来限制单个用户的抢购频率。其实很简单的就能想到用 redis 给每个用户做访问统计，甚至是带上商品 id ，对单个商品做访问统计，这都是可行的。
+
+我们先实现一个对用户的访问频率限制，我们在用户申请下单时，检查用户的访问次数，超过访问次数，则不让他下单！
+
+![image7b9e7293deb8df20.png](https://pic.tyzhang.top/images/2021/04/18/image7b9e7293deb8df20.png)
+
+**1 Controller代码**
+
+```java
+@Autowired
+private UserService userService;
+
+// 秒杀方法  乐观锁防止超卖+令牌桶算法限流+md5接口隐藏+单用户访问频率限制
+@RequestMapping("killtokenmd5limit")
+public String killtokenmd5limit(Integer id, Integer userid, String md5) {
+    System.out.println("秒杀商品的id=" + id);
+    // 加入令牌桶限流措施
+    // 设置一个等待时间，在等待时间内没有获取到响应token则抛弃
+    if (!rateLimiter.tryAcquire(1, TimeUnit.SECONDS)) {
+        log.info("抛弃请求：抢购失败，当前秒杀活动过于火爆，请重试!");
+        return "抢购失败，当前秒杀活动过于火爆，请重试!";
+    }
+    try {
+        // 单用户调用接口的频率限制
+        int count = userService.saveUserCount(userid);
+        log.info("用户截止该次的访问次数为：[{}]", count);
+        // 进行调用次数的判断
+        boolean isBanned = userService.getUserCount(userid);
+        if (isBanned) {
+            log.info("购买失败，超过频率限制!");
+            return "购买失败，超过频率限制!";
+        }
+        // 根据秒杀商品id去调用秒杀业务
+        int orderId = orderService.kill(id, userid, md5);
+        return "秒杀成功，订单id为" + String.valueOf(orderId);
+    } catch (Exception e) {
+        e.printStackTrace();
+        return e.getMessage();
+    }
+}
+```
+
+**2 Service代码**
+
+```java
+public interface UserService {
+    // 向redis中写入用户访问次数
+    int saveUserCount(Integer userId);
+    // 判断单位时间调用次数
+    boolean getUserCount(Integer userId);
+}
+```
+
+```java
+@Service
+@Transactional
+@Slf4j
+public class UserServiceImpl implements UserService {
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
+
+    @Override
+    public int saveUserCount(Integer userId) {
+        // 根据不同用户id生成调用次数的key
+        String limitKey = "LIMIT" + "_" + userId;
+        // 获取redis中指定key的调用次数
+        String limitNum = stringRedisTemplate.opsForValue().get(limitKey);
+        int limit = -1;
+        if (limitNum == null) {
+            // 第一次调用放入redis中设置为0
+            stringRedisTemplate.opsForValue().set(limitKey, "0", 3600, TimeUnit.SECONDS);
+        } else {
+            // 不是第一次调用每次+1
+            limit = Integer.parseInt(limitNum) + 1;
+            stringRedisTemplate.opsForValue().set(limitKey, String.valueOf(limit), 3600, TimeUnit.SECONDS);
+        }
+        // 返回调用次数
+        return limit;
+    }
+
+    @Override
+    public boolean getUserCount(Integer userId) {
+        String limitKey = "LIMIT" + "_" + userId;
+        // 跟库用户调用次数的key获取redis中调用次数
+        String limitNum = stringRedisTemplate.opsForValue().get(limitKey);
+        if (limitNum == null) {
+            // 为空直接抛弃说明key出现异常
+            log.error("该用户没有访问申请验证值记录，疑似异常");
+            return true;
+        }
+        // false代表没有超过 true代表超过
+        return Integer.parseInt(limitNum) > 10;
+    }
+}
+```
+
+**3 测试**
+
+**开启秒杀活动**
+
+`set kill1 1 EX 180`
+
+**获取md5**
+
+![imagebbb3cd74b8fbf6b6.png](https://pic.tyzhang.top/images/2021/04/18/imagebbb3cd74b8fbf6b6.png)
+
+**Jmeter访问30次**
+
+可以看到第 11 次开始就被限制访问了
+
+![image38667eaed12de2af.png](https://pic.tyzhang.top/images/2021/04/18/image38667eaed12de2af.png)

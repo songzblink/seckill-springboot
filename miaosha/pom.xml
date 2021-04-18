@@ -54,6 +54,11 @@
             <artifactId>guava</artifactId>
             <version>28.2-jre</version>
         </dependency>
+        <!--springboot整合redis依赖-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
